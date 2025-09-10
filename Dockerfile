@@ -1,4 +1,4 @@
-# ---------- Stage 1: Build dependencies ----------
+# ---------- Stage 1: Builder ----------
 FROM python:3.10-slim AS builder
 
 # Install build tools & dependencies
@@ -15,12 +15,11 @@ RUN apt-get update && apt-get upgrade -y \
     ca-certificates \
     build-essential \
  && git clone https://github.com/dylanaraps/neofetch.git /opt/neofetch \
- && ln -s /opt/neofetch/neofetch /usr/bin/neofetch \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy requirements first for better caching
+# Copy requirements first for caching
 COPY requirements.txt .
 
 # Build wheels for dependencies
@@ -28,20 +27,22 @@ RUN pip3 install --upgrade pip wheel \
  && pip3 wheel --no-cache-dir --wheel-dir /app/wheels -r requirements.txt
 
 
-# ---------- Stage 2: Final lightweight image ----------
+# ---------- Stage 2: Final ----------
 FROM python:3.10-slim
 
-# Install runtime dependencies only
+# Install only runtime dependencies (no git here)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     bash \
     fastfetch \
     ca-certificates \
- && git clone https://github.com/dylanaraps/neofetch.git /opt/neofetch \
- && ln -s /opt/neofetch/neofetch /usr/bin/neofetch \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
+# Copy neofetch from builder
+COPY --from=builder /opt/neofetch /opt/neofetch
+RUN ln -s /opt/neofetch/neofetch /usr/bin/neofetch
 
 # Copy built wheels and install
 COPY --from=builder /app/wheels /wheels
