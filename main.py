@@ -10,17 +10,6 @@ import sys
 from threading import Thread
 from flask import Flask
 
-app = Flask('')
-
-@app.route('/')
-def home():
-    return "Bot is alive", 200
-
-def run():
-    app.run(host='0.0.0.0', port=8080)
-
-Thread(target=run).start()
-
 async def load_and_run_plugins():
     await start_client()
     plugin_dir = "plugins"
@@ -52,4 +41,5 @@ if __name__ == "__main__":
             loop.close()
         except Exception:
             pass
+
 
